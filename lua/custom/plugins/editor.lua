@@ -10,6 +10,7 @@ vim.pack.add {
   'https://github.com/chentoast/marks.nvim',
   'https://github.com/chrisgrieser/nvim-spider',
   'https://github.com/folke/zen-mode.nvim',
+  'https://github.com/windwp/nvim-ts-autotag',
 }
 
 -- [[ flash.nvim: sneak-like jumps + easymotion-style labels ]]
@@ -33,6 +34,9 @@ end
 
 -- [[ zen-mode: distraction-free editing ]]
 require('zen-mode').setup {}
+
+-- [[ nvim-ts-autotag: linked/auto tag editing (Cursor's editor.linkedEditing) ]]
+require('nvim-ts-autotag').setup {}
 
 -- [[ Autosave on focus loss / leaving a buffer (Cursor's onFocusChange) ]]
 vim.api.nvim_create_autocmd({ 'FocusLost', 'BufLeave' }, {
