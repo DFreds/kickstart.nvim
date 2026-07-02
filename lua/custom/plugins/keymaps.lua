@@ -162,6 +162,8 @@ if ok then
     { '<leader>d', group = 'Debug' },
     { '<leader>z', group = 'Zen' },
     { '<leader>a', group = 'AI (Avante)' },
+    { '<leader>x', group = 'Diagnostics' },
+    { '<leader>S', group = 'Session' },
     { 'gs', group = 'Surround', mode = { 'n', 'x' } },
   }
 end
