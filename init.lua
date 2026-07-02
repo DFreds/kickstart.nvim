@@ -184,9 +184,10 @@ do
   -- [[ Basic Keymaps ]]
   --  See `:help vim.keymap.set()`
 
-  -- Clear highlights on search when pressing <Esc> in normal mode
+  -- Clear highlights on search when pressing <Esc> in normal mode or //
   --  See `:help hlsearch`
   vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+  vim.keymap.set('n', '//', '<cmd>nohlsearch<CR>')
 
   -- Diagnostic Config & Keymaps
   --  See `:help vim.diagnostic.Opts`
@@ -236,12 +237,6 @@ do
   vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
   vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
   vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
-
-  -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
-  -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
-  -- vim.keymap.set("n", "<C-S-l>", "<C-w>L", { desc = "Move window to the right" })
-  -- vim.keymap.set("n", "<C-S-j>", "<C-w>J", { desc = "Move window to the lower" })
-  -- vim.keymap.set("n", "<C-S-k>", "<C-w>K", { desc = "Move window to the upper" })
 
   -- [[ Basic Autocommands ]]
   --  See `:help lua-guide-autocommands`
@@ -430,10 +425,22 @@ do
 
   -- Add/delete/replace surroundings (brackets, quotes, etc.)
   --
-  -- - saiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
-  -- - sd'   - [S]urround [D]elete [']quotes
-  -- - sr)'  - [S]urround [R]eplace [)] [']
-  require('mini.surround').setup()
+  -- NOTE: mappings are under a `gs` prefix (instead of the default `s`) so that
+  -- `s`/`S` remain free for flash.nvim (sneak/easymotion) in custom/plugins.
+  -- - gsaiw) - [G]o [S]urround [A]dd [I]nner [W]ord [)]Paren
+  -- - gsd'   - [G]o [S]urround [D]elete [']quotes
+  -- - gsr)'  - [G]o [S]urround [R]eplace [)] [']
+  require('mini.surround').setup {
+    mappings = {
+      add = 'gsa',
+      delete = 'gsd',
+      find = 'gsf',
+      find_left = 'gsF',
+      highlight = 'gsh',
+      replace = 'gsr',
+      update_n_lines = 'gsn',
+    },
+  }
 
   -- Simple and easy statusline.
   --  You could remove this setup call if you don't like it,
@@ -704,7 +711,11 @@ do
     --    https://github.com/pmizio/typescript-tools.nvim
     --
     -- But for many setups, the LSP (`ts_ls`) will work just fine
-    -- ts_ls = {},
+    ts_ls = {}, -- JavaScript / TypeScript
+    eslint = {}, -- ESLint diagnostics + fixes
+    cssls = {}, -- CSS / SCSS / LESS
+    jsonls = {}, -- JSON
+    html = {}, -- HTML (also used for EJS/handlebars markup)
 
     stylua = {}, -- Used to format Lua code
 
@@ -763,6 +774,9 @@ do
   local ensure_installed = vim.tbl_keys(servers or {})
   vim.list_extend(ensure_installed, {
     -- You can add other tools here that you want Mason to install
+    'prettierd', -- Prettier daemon (used by conform for JS/TS/web formatting)
+    'prettier',
+    'js-debug-adapter', -- DAP adapter for JavaScript / TypeScript (see custom/plugins/dap_js.lua)
   })
 
   require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -803,12 +817,23 @@ do
       -- Conform can also run multiple formatters sequentially
       -- python = { "isort", "black" },
       --
-      -- You can use 'stop_after_first' to run the first available formatter from the list
-      -- javascript = { "prettierd", "prettier", stop_after_first = true },
+      -- Use 'stop_after_first' to run the first available formatter from the list.
+      javascript = { 'prettierd', 'prettier', stop_after_first = true },
+      javascriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+      typescript = { 'prettierd', 'prettier', stop_after_first = true },
+      typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+      json = { 'prettierd', 'prettier', stop_after_first = true },
+      jsonc = { 'prettierd', 'prettier', stop_after_first = true },
+      css = { 'prettierd', 'prettier', stop_after_first = true },
+      scss = { 'prettierd', 'prettier', stop_after_first = true },
+      html = { 'prettierd', 'prettier', stop_after_first = true },
+      markdown = { 'prettierd', 'prettier', stop_after_first = true },
+      yaml = { 'prettierd', 'prettier', stop_after_first = true },
     },
   }
 
-  vim.keymap.set({ 'n', 'v' }, '<leader>f', function() require('conform').format { async = true } end, { desc = '[F]ormat buffer' })
+  -- NOTE: Formatting is bound to <leader>cf in lua/custom/plugins/keymaps.lua
+  -- to match the Cursor keybindings and free up <leader>f as the "Find" group.
 end
 
 -- ============================================================
@@ -969,17 +994,17 @@ do
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
-  -- require 'kickstart.plugins.debug'
-  -- require 'kickstart.plugins.indent_line'
-  -- require 'kickstart.plugins.lint'
-  -- require 'kickstart.plugins.autopairs'
-  -- require 'kickstart.plugins.neo-tree'
-  -- require 'kickstart.plugins.gitsigns' -- adds gitsigns recommended keymaps
+  require 'kickstart.plugins.debug'
+  require 'kickstart.plugins.indent_line'
+  require 'kickstart.plugins.lint'
+  require 'kickstart.plugins.autopairs'
+  require 'kickstart.plugins.neo-tree'
+  require 'kickstart.plugins.gitsigns' -- adds gitsigns recommended keymaps
 
   -- NOTE: You can add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- require 'custom.plugins'
+  require 'custom.plugins'
 end
 
 -- The line beneath this is called `modeline`. See `:help modeline`
