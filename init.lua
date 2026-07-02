@@ -933,6 +933,7 @@ do
 
   -- Ensure basic parsers are installed
   local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+  -- NOTE: 'regex' omitted — requires a C compiler (cl.exe) on Windows for treesitter build.
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
