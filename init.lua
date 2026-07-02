@@ -130,6 +130,9 @@ do
   -- Enable undo/redo changes even after closing and reopening a file
   vim.o.undofile = true
 
+  -- Disable swap file
+  vim.o.swapfile = false
+
   -- Case-insensitive searching UNLESS \C or one or more capital letters in the search term
   vim.o.ignorecase = true
   vim.o.smartcase = true
