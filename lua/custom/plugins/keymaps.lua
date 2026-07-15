@@ -161,7 +161,7 @@ if ok then
     { '<leader>b', group = 'Buffer' },
     { '<leader>d', group = 'Debug' },
     { '<leader>z', group = 'Zen' },
-    { '<leader>a', group = 'AI (Avante)' },
+    { '<leader>a', group = 'AI (Avante + Claude Code)' },
     { '<leader>x', group = 'Diagnostics' },
     { '<leader>S', group = 'Session' },
     { 'gs', group = 'Surround', mode = { 'n', 'x' } },

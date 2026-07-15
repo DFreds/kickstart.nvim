@@ -4,7 +4,13 @@
 --
 -- Avante reuses your Copilot authentication (provider = 'copilot'), so no extra
 -- API key is required. Run `:Copilot auth` once after first launch to sign in.
--- To switch to Claude/OpenAI later, change `provider` below and set the API key.
+--
+-- NOTE: avante's Claude provider (auth_type = 'max') was tried and reverted --
+-- it works by reusing your Claude Pro/Max subscription's OAuth token, which is
+-- against Anthropic's terms of service (subscription OAuth is restricted to
+-- Claude Code/claude.ai) and broke with an "Invalid code_challenge_method"
+-- error. Claude is still available via claude-code.nvim (see claude-code.lua,
+-- <leader>tc) which runs the real, sanctioned Claude Code CLI instead.
 
 -- [[ GitHub Copilot: inline ghost-text suggestions ]]
 vim.pack.add {
