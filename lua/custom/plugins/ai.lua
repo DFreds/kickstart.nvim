@@ -126,6 +126,10 @@ local ok, err = pcall(function()
   }
 end)
 
+-- Deferred so the warning lands after startup finishes drawing. Notifying inline
+-- here would block the dashboard behind a "press any key to continue" prompt.
 if not ok then
-  vim.notify('avante.nvim not initialized yet. Run `:Copilot auth`, then restart Neovim.\n(' .. tostring(err) .. ')', vim.log.levels.WARN)
+  vim.schedule(function()
+    vim.notify('avante.nvim not initialized yet. Run `:Copilot auth`, then restart Neovim.\n(' .. tostring(err) .. ')', vim.log.levels.WARN)
+  end)
 end
