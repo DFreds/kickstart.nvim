@@ -174,6 +174,16 @@ do
   -- instead raise a dialog asking if you wish to save the current file(s)
   -- See `:help 'confirm'`
   vim.o.confirm = true
+
+  -- Use PowerShell for :terminal and :! instead of cmd.exe
+  if vim.fn.has 'win32' == 1 then
+    vim.o.shell = 'powershell.exe'
+    vim.o.shellcmdflag = '-NoLogo -ExecutionPolicy RemoteSigned -Command'
+    vim.o.shellredir = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
+    vim.o.shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
+    vim.o.shellquote = ''
+    vim.o.shellxquote = ''
+  end
 end
 
 -- ============================================================
