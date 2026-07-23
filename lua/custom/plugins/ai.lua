@@ -1,16 +1,28 @@
 -- AI tooling to make Neovim feel like Cursor:
---   copilot.lua  -> Cursor-style inline (ghost text) tab completion
---   avante.nvim  -> Cursor-style AI chat sidebar + inline edits
+--   copilot.lua -> Cursor-style inline (ghost text) tab completion
 --
--- Avante reuses your Copilot authentication (provider = 'copilot'), so no extra
--- API key is required. Run `:Copilot auth` once after first launch to sign in.
+-- Run `:Copilot auth` once to sign in. Credentials are owned by the Copilot
+-- language server and live in ~/.config/github-copilot/auth.db (on Windows,
+-- %LOCALAPPDATA%\github-copilot\auth.db).
 --
--- NOTE: avante's Claude provider (auth_type = 'max') was tried and reverted --
--- it works by reusing your Claude Pro/Max subscription's OAuth token, which is
--- against Anthropic's terms of service (subscription OAuth is restricted to
--- Claude Code/claude.ai) and broke with an "Invalid code_challenge_method"
--- error. Claude is still available via claude-code.nvim (see claude-code.lua,
--- <leader>tc) which runs the real, sanctioned Claude Code CLI instead.
+-- AI chat is not here -- it runs through claude-code.nvim (see claude-code.lua,
+-- <leader>tc), which drives the real Claude Code CLI.
+--
+-- NOTE: avante.nvim was removed rather than fixed. copilot.lua v3.0.0 moved
+-- credentials into auth.db, and avante still reads only the legacy
+-- hosts.json/apps.json that the language server no longer writes, so its copilot
+-- provider cannot authenticate at all -- see yetone/avante.nvim#3121, open with
+-- no fix on upstream main. Reading auth.db back out needs a sqlite3 CLI, which
+-- macOS ships and Windows does not, so a bridge would have been Mac-only.
+-- Avante was only wanted for inline suggestions anyway, which copilot.lua below
+-- already does; avante's own config marks that feature experimental and warns
+-- against running it on the copilot provider (yetone/avante.nvim#1048).
+--
+-- Also previously tried and reverted: avante's Claude provider with
+-- auth_type = 'max', which reuses a Claude Pro/Max subscription OAuth token.
+-- That is against Anthropic's terms of service (subscription OAuth is
+-- restricted to Claude Code/claude.ai) and broke with an "Invalid
+-- code_challenge_method" error regardless.
 
 -- [[ GitHub Copilot: inline ghost-text suggestions ]]
 vim.pack.add {
@@ -62,74 +74,3 @@ vim.keymap.set('i', '<S-Tab>', function()
 end, { desc = 'Snippet jump back' })
 
 vim.keymap.set('i', '<M-Right>', copilot_suggestion.accept_word, { desc = 'Copilot accept word' })
-
--- [[ Avante: AI chat + inline edits (the "Cursor" experience) ]]
--- Recommended editor options for Avante's UI.
-vim.o.laststatus = 3
-
-vim.pack.add {
-  'https://github.com/MunifTanjim/nui.nvim',
-  'https://github.com/HakonHarnes/img-clip.nvim',
-  'https://github.com/MeanderingProgrammer/render-markdown.nvim',
-}
-
-require('img-clip').setup {
-  default = {
-    embed_image_as_base64 = false,
-    prompt_for_file_name = false,
-    drag_and_drop = { insert_mode = true },
-    use_absolute_path = true, -- required on Windows
-  },
-}
-
-require('render-markdown').setup {
-  file_types = { 'markdown', 'Avante' },
-}
-
--- Build Avante's native helper after it is installed/updated. On Windows this
--- runs the bundled Build.ps1 (downloads prebuilt binaries). Registered before
--- `vim.pack.add` so the build completes during installation, before setup().
-vim.api.nvim_create_autocmd('PackChanged', {
-  group = vim.api.nvim_create_augroup('custom-avante-build', { clear = true }),
-  callback = function(ev)
-    if ev.data.spec.name ~= 'avante.nvim' then return end
-    if ev.data.kind ~= 'install' and ev.data.kind ~= 'update' then return end
-
-    local cmd
-    if vim.fn.has 'win32' == 1 then
-      cmd = { 'powershell', '-ExecutionPolicy', 'Bypass', '-File', 'Build.ps1', '-BuildFromSource', 'false' }
-    else
-      cmd = { 'make' }
-    end
-
-    local result = vim.system(cmd, { cwd = ev.data.path }):wait()
-    if result.code ~= 0 then vim.notify('Avante build failed:\n' .. (result.stderr or result.stdout or ''), vim.log.levels.ERROR) end
-  end,
-})
-
-vim.pack.add {
-  'https://github.com/yetone/avante.nvim',
-}
-
--- NOTE: The copilot provider reads your Copilot OAuth token during setup(), so
--- this call fails until you have run `:Copilot auth` at least once. We guard it
--- with pcall so a fresh (unauthenticated) install still loads the rest of the
--- config; after authenticating, restart Neovim and Avante will initialize.
-local ok, err = pcall(function()
-  require('avante').setup {
-    provider = 'copilot',
-    providers = {
-      copilot = {
-        model = 'gpt-4o-2024-11-20',
-      },
-    },
-  }
-end)
-
--- Deferred so the warning lands after startup finishes drawing. Notifying inline
--- here would block the dashboard behind a "press any key to continue" prompt.
-if not ok then
-  vim.schedule(function()
-    vim.notify('avante.nvim not initialized yet. Run `:Copilot auth`, then restart Neovim.\n(' .. tostring(err) .. ')', vim.log.levels.WARN)
-  end)
-end

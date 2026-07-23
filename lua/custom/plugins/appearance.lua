@@ -1,6 +1,9 @@
 -- Cursor settings.json parity: Monokai theme, bracket colorization, color swatches, breadcrumbs.
 -- Loads after init.lua's tokyonight, overriding the colorscheme.
 
+-- One global statusline across all splits, rather than one per window.
+vim.o.laststatus = 3
+
 -- Monokai Vibrant-style theme (sonokai andromeda variant).
 vim.g.sonokai_style = 'andromeda'
 
