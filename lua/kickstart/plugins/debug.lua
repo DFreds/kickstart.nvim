@@ -1,10 +1,10 @@
 -- debug.lua
 --
--- Shows how to use the DAP plugin to debug your code.
+-- Sets up nvim-dap and nvim-dap-ui along with the shared keymaps.
 --
--- Primarily focused on configuring the debugger for Go, but can
--- be extended to other languages as well. That's why it's called
--- kickstart.nvim and not kitchen-sink.nvim ;)
+-- This file stays language agnostic. Adapters and per-filetype debug
+-- configurations live in lua/custom/plugins/ (see dap_js.lua for
+-- JavaScript / TypeScript).
 
 vim.pack.add {
   'https://github.com/mfussenegger/nvim-dap',
@@ -12,7 +12,6 @@ vim.pack.add {
   'https://github.com/nvim-neotest/nvim-nio',
   'https://github.com/mason-org/mason.nvim',
   'https://github.com/jay-babu/mason-nvim-dap.nvim',
-  'https://github.com/leoluz/nvim-dap-go',
 }
 
 -- Basic debugging keymaps, feel free to change to your liking!
@@ -37,12 +36,12 @@ require('mason-nvim-dap').setup {
   -- see mason-nvim-dap README for more information
   handlers = {},
 
-  -- You'll need to check that you have the required things installed
-  -- online, please don't ask me how to install them :)
-  ensure_installed = {
-    -- Update this to ensure that you have the debuggers for the langs you want
-    'delve',
-  },
+  -- Debuggers to install up front. Left empty on purpose: js-debug-adapter is
+  -- installed through the mason-tool-installer list in init.lua, and anything
+  -- else is picked up by automatic_installation above. Only add a debugger here
+  -- if its toolchain is actually present, otherwise Mason retries the failed
+  -- install on every startup.
+  ensure_installed = {},
 }
 
 -- Dap UI setup
@@ -84,12 +83,3 @@ dapui.setup {
 dap.listeners.after.event_initialized['dapui_config'] = dapui.open
 dap.listeners.before.event_terminated['dapui_config'] = dapui.close
 dap.listeners.before.event_exited['dapui_config'] = dapui.close
-
--- Install golang specific config
-require('dap-go').setup {
-  delve = {
-    -- On Windows delve must be run attached or it crashes.
-    -- See https://github.com/leoluz/nvim-dap-go/blob/main/README.md#configuring
-    detached = vim.fn.has 'win32' == 0,
-  },
-}
