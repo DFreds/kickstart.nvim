@@ -13,6 +13,10 @@ vim.pack.add {
 }
 
 require('claude-code').setup {
+  window = {
+    position = 'vertical botright',
+    split_ratio = 0.4,
+  },
   keymaps = {
     toggle = {
       normal = '<leader>aT',
