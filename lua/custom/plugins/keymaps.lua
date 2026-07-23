@@ -75,6 +75,7 @@ map('n', '<leader>co', function()
     apply = true,
   }
 end, 'Organize imports')
+map('n', '<leader>cd', function() require('neogen').generate {} end, 'Generate doc comment')
 
 -- f: Find
 map('n', '<leader>ff', telescope.find_files, 'Quick open (files)')
