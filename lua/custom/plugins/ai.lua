@@ -74,3 +74,19 @@ vim.keymap.set('i', '<S-Tab>', function()
 end, { desc = 'Snippet jump back' })
 
 vim.keymap.set('i', '<M-Right>', copilot_suggestion.accept_word, { desc = 'Copilot accept word' })
+
+-- Esc to bail out of a snippet: leaving insert (or select->normal) unlinks the
+-- current LuaSnip session so <Tab> stops jumping placeholders and goes back to
+-- Copilot accept / real tab. The jump_active guard keeps normal Tab-jumps working
+-- (LuaSnip passes through select mode while jumping).
+vim.api.nvim_create_autocmd('ModeChanged', {
+  pattern = '*',
+  callback = function()
+    if ((vim.v.event.old_mode == 's' and vim.v.event.new_mode == 'n') or vim.v.event.old_mode == 'i')
+      and luasnip.session.current_nodes[vim.api.nvim_get_current_buf()]
+      and not luasnip.session.jump_active
+    then
+      luasnip.unlink_current()
+    end
+  end,
+})
