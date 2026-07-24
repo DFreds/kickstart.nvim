@@ -82,10 +82,82 @@ map('n', '<leader>ff', telescope.find_files, 'Quick open (files)')
 map('n', '<leader>fr', telescope.oldfiles, 'Open recent')
 
 -- w: Window
-map('n', '<leader>wh', '<C-w>H', 'Move window left')
-map('n', '<leader>wl', '<C-w>L', 'Move window right')
-map('n', '<leader>wj', '<C-w>J', 'Move window down')
-map('n', '<leader>wk', '<C-w>K', 'Move window up')
+-- Move the current *buffer* into the window in the given direction, the way
+-- Cursor's "Move Editor into Group" works. If no window exists that way a new
+-- split is created to hold it; otherwise the existing window is reused and
+-- whatever it was showing becomes hidden. The source window falls back to its
+-- alternate buffer, or closes if there is nothing left for it to show.
+
+-- Buffer the source window should display once the current one leaves it: its
+-- alternate if that still exists, else the most recently used other buffer.
+local function fallback_buf(exclude)
+  local alt = vim.fn.bufnr '#'
+  if alt ~= -1 and alt ~= exclude and vim.api.nvim_buf_is_valid(alt) and vim.bo[alt].buflisted then return alt end
+
+  local best, best_used = nil, -1
+  for _, info in ipairs(vim.fn.getbufinfo { buflisted = 1 }) do
+    if info.bufnr ~= exclude and info.lastused > best_used then
+      best, best_used = info.bufnr, info.lastused
+    end
+  end
+  return best
+end
+
+local split_cmd = {
+  h = 'leftabove vsplit',
+  l = 'rightbelow vsplit',
+  k = 'leftabove split',
+  j = 'rightbelow split',
+}
+
+local function move_buffer(dir)
+  local src_win = vim.api.nvim_get_current_win()
+  local buf = vim.api.nvim_get_current_buf()
+  local cursor = vim.api.nvim_win_get_cursor(src_win)
+
+  -- Only real file buffers move; leave the explorer, terminals, etc. put.
+  if vim.bo[buf].buftype ~= '' then
+    vim.notify('Not a movable buffer.', vim.log.levels.WARN)
+    return
+  end
+
+  -- winnr(dir) returns the current window when there is nothing that way.
+  local target_win
+  local target_nr = vim.fn.winnr(dir)
+  if target_nr ~= vim.fn.winnr() then
+    local win = vim.fn.win_getid(target_nr)
+    -- Never drop a buffer into the explorer or a terminal; split instead.
+    if vim.bo[vim.api.nvim_win_get_buf(win)].buftype == '' then target_win = win end
+  end
+
+  local fallback = fallback_buf(buf)
+  if not target_win and not fallback then
+    -- Splitting would just clone the buffer and then collapse back again.
+    vim.notify('No other buffer to leave behind.', vim.log.levels.WARN)
+    return
+  end
+
+  if target_win then
+    vim.api.nvim_win_set_buf(target_win, buf)
+  else
+    vim.cmd(split_cmd[dir]) -- the new window inherits the current buffer
+    target_win = vim.api.nvim_get_current_win()
+  end
+
+  if fallback then
+    vim.api.nvim_win_set_buf(src_win, fallback)
+  else
+    vim.api.nvim_win_close(src_win, false)
+  end
+
+  vim.api.nvim_set_current_win(target_win)
+  pcall(vim.api.nvim_win_set_cursor, target_win, cursor)
+end
+
+map('n', '<leader>wh', function() move_buffer 'h' end, 'Move buffer left')
+map('n', '<leader>wl', function() move_buffer 'l' end, 'Move buffer right')
+map('n', '<leader>wj', function() move_buffer 'j' end, 'Move buffer down')
+map('n', '<leader>wk', function() move_buffer 'k' end, 'Move buffer up')
 map('n', '<leader>wv', '<cmd>split<cr>', 'Split below')
 map('n', '<leader>ws', '<cmd>vsplit<cr>', 'Split right')
 
